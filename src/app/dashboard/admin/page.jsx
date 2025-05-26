@@ -28,8 +28,16 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (!session || session.user.role !== 'ADMIN') {
-      router.push('/');
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+    
+    // Case-insensitive role check
+    const userRole = session.user.role?.toUpperCase();
+    if (userRole !== 'ADMIN') {
+      // Show access denied message
+      setError('Access Denied. You must be an admin to access this page.');
       return;
     }
 
@@ -300,7 +308,7 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => router.push('/dashboard/admin/blogs')}
+            onClick={() => router.push('/dashboard/admin/blogs/')}
             className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
           >
             <h3 className="text-lg font-semibold text-gray-900">Manage Blogs</h3>

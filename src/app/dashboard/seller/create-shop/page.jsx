@@ -59,12 +59,38 @@ export default function CreateShop() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/shop', {
+      // Format the data to match the API expectations
+      const shopData = {
+        name: formData.name,
+        description: formData.description,
+        address: {
+          street: formData.address.street,
+          city: formData.address.city,
+          state: formData.address.state,
+          zipCode: formData.address.zipCode,
+          country: 'Bhutan' // Default country
+        },
+        contact: {
+          phone: formData.phone,
+          email: formData.email
+        },
+        businessHours: formData.businessHours,
+        location: `${formData.address.city}, ${formData.address.state}`, // Required field
+        media: {
+          logo: '/images/default-shop.png', // Default logo
+          coverImage: '/images/default-shop-cover.png' // Default cover image
+        }
+      };
+
+      console.log('Submitting shop data:', shopData);
+
+      // Submit to the correct API endpoint
+      const response = await fetch('/api/shops', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(shopData),
       });
 
       const data = await response.json();
@@ -81,7 +107,7 @@ export default function CreateShop() {
 
       // Wait 3 seconds before redirecting
       setTimeout(() => {
-        router.push('/shop/profile');
+        router.push('/dashboard/seller');
       }, 3000);
     } catch (error) {
       setToast({

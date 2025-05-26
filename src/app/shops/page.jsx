@@ -12,7 +12,7 @@ export default function ShopPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
-    } else if (session?.user?.role !== 'seller') {
+    } else if (session?.user?.role?.toUpperCase() !== 'SELLER') {
       router.push('/');
     }
   }, [session, status, router]);
@@ -25,7 +25,7 @@ export default function ShopPage() {
     );
   }
 
-  if (!session || session.user.role !== 'seller') {
+  if (!session || session.user.role.toUpperCase() !== 'SELLER') {
     return null;
   }
 

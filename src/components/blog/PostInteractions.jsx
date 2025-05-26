@@ -55,9 +55,12 @@ export default function PostInteractions({ post, onLike, onComment }) {
     }
   };
 
+  // Ensure post.comments exists before accessing it
+  const comments = post?.comments || [];
+
   // Get visible comments based on show all state
-  const visibleComments = showAllComments ? post.comments : post.comments.slice(0, 3);
-  const hasMoreComments = post.comments.length > 3;
+  const visibleComments = showAllComments ? comments : comments.slice(0, 3);
+  const hasMoreComments = comments.length > 3;
 
   return (
     <div className="border-t border-gray-100 pt-4 mt-4">
@@ -82,7 +85,7 @@ export default function PostInteractions({ post, onLike, onComment }) {
             className="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors"
           >
             <FaComment />
-            <span className="text-sm">Comment ({post.comments.length})</span>
+            <span className="text-sm">Comment ({comments.length})</span>
           </button>
 
           {/* Share Button */}
@@ -97,7 +100,7 @@ export default function PostInteractions({ post, onLike, onComment }) {
       </div>
 
       {/* Comments Section */}
-      {post.comments.length > 0 && (
+      {comments.length > 0 && (
         <div className="mt-4 space-y-3">
           <div className="space-y-3">
             {visibleComments.map((comment) => (
@@ -136,7 +139,7 @@ export default function PostInteractions({ post, onLike, onComment }) {
               ) : (
                 <>
                   <FaChevronDown className="text-xs" />
-                  <span>Show {post.comments.length - 3} More Comments</span>
+                  <span>Show {comments.length - 3} More Comments</span>
                 </>
               )}
             </button>

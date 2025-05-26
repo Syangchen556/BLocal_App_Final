@@ -11,7 +11,8 @@ function SignIn() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    role: 'BUYER'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ function SignIn() {
 
     try {
       if (isLogin) {
+        console.log('Attempting login with:', formData.email);
         // Handle login
         const result = await signIn('credentials', {
           email: formData.email,
@@ -30,13 +32,38 @@ function SignIn() {
           redirect: false
         });
 
+        console.log('Login result:', result);
         if (result?.error) {
           setError(result.error);
         } else {
-          router.push('/');
+          console.log('Login successful, checking user role');
+          
+          // Add a small delay to ensure session is properly set
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Fetch the user session to check the role
+          const response = await fetch('/api/auth/session');
+          const session = await response.json();
+          console.log('Session data:', session);
+          
+          // Check user role (now standardized to uppercase in auth.js)
+          const userRole = session?.user?.role;
+          console.log(`User role detected: ${userRole}, redirecting to appropriate dashboard`);
+          
+          if (userRole === 'ADMIN') {
+            router.push('/dashboard/admin');
+          } else if (userRole === 'SELLER') {
+            router.push('/dashboard/seller');
+          } else if (userRole === 'BUYER') {
+            router.push('/dashboard/buyer');
+          } else {
+            console.log('Unknown role, redirecting to homepage');
+            router.push('/');
+          }
           router.refresh();
         }
       } else {
+        console.log('Attempting registration with:', formData.email);
         // Handle registration
         const res = await fetch('/api/auth/register', {
           method: 'POST',
@@ -44,11 +71,14 @@ function SignIn() {
           body: JSON.stringify(formData)
         });
 
+        console.log('Registration response status:', res.status);
         let data;
         try {
           data = await res.json();
-        } catch {
-          setError('Unexpected server response.');
+          console.log('Registration response data:', data);
+        } catch (parseError) {
+          console.error('Error parsing registration response:', parseError);
+          setError('Unexpected server response. Please try again.');
           setLoading(false);
           return;
         }
@@ -57,6 +87,7 @@ function SignIn() {
           throw new Error(data.error || 'Registration failed');
         }
 
+        console.log('Registration successful, attempting auto-login');
         // Auto login after successful registration
         const result = await signIn('credentials', {
           email: formData.email,
@@ -64,15 +95,40 @@ function SignIn() {
           redirect: false
         });
 
+        console.log('Auto-login result:', result);
         if (result?.error) {
           setError(result.error);
         } else {
-          router.push('/');
+          console.log('Auto-login successful, checking user role');
+          
+          // Add a small delay to ensure session is properly set
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Fetch the user session to check the role
+          const response = await fetch('/api/auth/session');
+          const session = await response.json();
+          console.log('Session data:', session);
+          
+          // Check user role (now standardized to uppercase in auth.js)
+          const userRole = session?.user?.role;
+          console.log(`User role detected: ${userRole}, redirecting to appropriate dashboard`);
+          
+          if (userRole === 'ADMIN') {
+            router.push('/dashboard/admin');
+          } else if (userRole === 'SELLER') {
+            router.push('/dashboard/seller');
+          } else if (userRole === 'BUYER') {
+            router.push('/dashboard/buyer');
+          } else {
+            console.log('Unknown role, redirecting to homepage');
+            router.push('/');
+          }
           router.refresh();
         }
       }
     } catch (error) {
-      setError(error.message);
+      console.error('Authentication error:', error);
+      setError(error.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -96,24 +152,55 @@ function SignIn() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             {!isLogin && (
-              <div className="mb-4">
-                <label htmlFor="name" className="sr-only">Name</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-gray-400" />
+              <>
+                <div className="mb-4">
+                  <label htmlFor="name" className="sr-only">Full name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      className="appearance-none rounded-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                      placeholder="Full name"
+                      value={formData.name}
+                      onChange={handleChange}
+                    />
                   </div>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required={!isLogin}
-                    className="appearance-none rounded-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                    placeholder="Full name"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
                 </div>
-              </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">I want to join as:</label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="BUYER"
+                        checked={formData.role === 'BUYER'}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Buyer</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="SELLER"
+                        checked={formData.role === 'SELLER'}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Seller</span>
+                    </label>
+                  </div>
+                </div>
+              </>
             )}
             <div className="mb-4">
               <label htmlFor="email" className="sr-only">Email address</label>
@@ -185,7 +272,7 @@ function SignIn() {
               onClick={() => {
                 setIsLogin(!isLogin);
                 setError('');
-                setFormData({ name: '', email: '', password: '' });
+                setFormData({ name: '', email: '', password: '', role: 'BUYER' });
               }}
               className="font-medium text-green-600 hover:text-green-500"
             >

@@ -19,8 +19,17 @@ const shopSchema = new mongoose.Schema({
   },
   owner: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+    ref: 'User',
+    required: false // Making it optional for test accounts
+  },
+  // Adding these fields for test accounts where owner might be an email
+  ownerEmail: { 
+    type: String,
+    trim: true
+  },
+  ownerName: { 
+    type: String,
+    trim: true
   },
   logo: { type: String },
   coverImage: { type: String },
@@ -49,8 +58,9 @@ const shopSchema = new mongoose.Schema({
   }],
   status: { 
     type: String, 
-    enum: ['active', 'inactive'], 
-    default: 'active'   },
+    enum: ['active', 'inactive', 'PENDING', 'rejected', 'suspended'], 
+    default: 'inactive' 
+  },
   rating: {
     average: {
       type: Number,

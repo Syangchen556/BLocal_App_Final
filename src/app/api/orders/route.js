@@ -1,12 +1,12 @@
-const { NextResponse } = require('next/server');
-const { getServerSession } = require('next-auth/next');
-const { authOptions } = require('@/lib/auth');
-const { connectDB } = require('@/lib/mongodb');
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 // Get orders for the current user
-async function GET(req) {
+export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -25,41 +25,43 @@ async function GET(req) {
 }
 
 // Create a new order
-async function POST(req) {
+export async function POST(req) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { items, shippingAddress, paymentMethod } = await req.json();
-    if (!items || !shippingAddress || !paymentMethod) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const { items, total } = await req.json();
+    if (!items || !Array.isArray(items)) {
+      return NextResponse.json({ error: 'Missing or invalid items' }, { status: 400 });
     }
 
     const db = await connectDB();
+    
+    // Generate a unique order number
+    const orderNumber = 'ORD-' + Date.now().toString().slice(-8) + '-' + Math.floor(Math.random() * 1000);
+    
     const order = {
       userId: session.user.id,
+      orderNumber,
       items,
-      shippingAddress,
-      paymentMethod,
       status: 'pending',
-      total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+      paymentStatus: 'unpaid',
+      total: total || items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
     const result = await db.collection('orders').insertOne(order);
 
-    // Clear the user's cart after successful order
-    await db.collection('carts').updateOne(
-      { userId: session.user.id },
-      { $set: { items: [], updatedAt: new Date() } }
-    );
+    // Don't clear the cart here - we'll do it after payment is confirmed
+    // The cart will be cleared in the cart page after order is placed
 
     return NextResponse.json({
       message: 'Order created successfully',
-      orderId: result.insertedId
+      orderId: result.insertedId.toString(),
+      orderNumber: orderNumber
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -67,4 +69,41 @@ async function POST(req) {
   }
 }
 
-module.exports = { GET, POST }; 
+// Update order status
+export async function PUT(req) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { orderId, status, paymentStatus } = await req.json();
+    if (!orderId) {
+      return NextResponse.json({ error: 'Missing order ID' }, { status: 400 });
+    }
+
+    const db = await connectDB();
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    if (status) updateData.status = status;
+    if (paymentStatus) updateData.paymentStatus = paymentStatus;
+
+    const result = await db.collection('orders').updateOne(
+      { _id: new ObjectId(orderId), userId: session.user.id },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: 'Order not found or not authorized' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      message: 'Order updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating order:', error);
+    return NextResponse.json({ error: 'Error updating order' }, { status: 500 });
+  }
+}

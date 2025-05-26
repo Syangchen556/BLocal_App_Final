@@ -1,12 +1,12 @@
 const { NextResponse } = require('next/server');
-const { getServerSession } = require('next-auth/next');
-const { authOptions } = require('@/lib/auth');
+const { auth } = require('@/lib/auth');
 const { connectDB } = require('@/lib/mongodb');
 import { sendContactNotification, sendContactConfirmation } from '@/lib/email';
 
 async function POST(req) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
+
     const { name, email, subject, message } = await req.json();
 
     if (!name || !email || !subject || !message) {

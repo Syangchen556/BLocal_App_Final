@@ -1,0 +1,12 @@
+{
+  "extends": "next/core-web-vitals",
+  "ignorePatterns": [
+    ".next",
+    ".next/**/*",
+    "node_modules",
+    "node_modules/**/*"
+  ],
+  "rules": {
+    "@next/next/no-assign-module-variable": "off"
+  }
+} 

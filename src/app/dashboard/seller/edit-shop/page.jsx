@@ -38,7 +38,7 @@ export default function EditShop() {
   useEffect(() => {
     if (status === 'loading') return;
 
-    if (!session || session.user.role !== 'SELLER') {
+    if (!session || session.user.role.toUpperCase() !== 'SELLER') {
       router.push('/auth/signin');
       return;
     }

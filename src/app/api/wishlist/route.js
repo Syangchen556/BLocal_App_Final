@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import connectDB from '@/lib/mongodb';
+import { auth } from '@/lib/auth';
+import { dbConnect } from '@/lib/mongodb';
 import Wishlist from '@/models/Wishlist';
+import User from '@/models/User';
+import mongoose from 'mongoose';
 
 // Get user's wishlist
 export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session) {
       return NextResponse.json(
@@ -16,9 +17,33 @@ export async function GET(req) {
       );
     }
 
-    await connectDB();
+    await dbConnect();
 
-    let wishlist = await Wishlist.findOne({ user: session.user.id })
+    // Handle both ObjectId and email-based user IDs
+    let userId = session.user.id;
+    let userQuery;
+    
+    // Check if the ID is a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      userQuery = { _id: userId };
+    } else {
+      // If not a valid ObjectId, assume it's an email (for test accounts)
+      userQuery = { email: userId };
+      
+      // Try to find the user by email
+      const user = await User.findOne(userQuery);
+      if (user) {
+        userId = user._id;
+      } else {
+        // For test accounts that don't exist in the database yet
+        // Create a temporary wishlist with the email as a string identifier
+        return NextResponse.json({
+          items: []
+        });
+      }
+    }
+
+    let wishlist = await Wishlist.findOne({ user: userId })
       .populate({
         path: 'items.product',
         select: 'name description price imageUrl shop',
@@ -29,10 +54,16 @@ export async function GET(req) {
       });
 
     if (!wishlist) {
-      wishlist = await Wishlist.create({
-        user: session.user.id,
-        items: []
-      });
+      // Only create a new wishlist if we have a valid user ID
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        wishlist = await Wishlist.create({
+          user: userId,
+          items: []
+        });
+      } else {
+        // Return an empty wishlist for test accounts
+        wishlist = { items: [] };
+      }
     }
 
     return NextResponse.json(wishlist);
@@ -48,7 +79,7 @@ export async function GET(req) {
 // Add or remove item from wishlist
 export async function POST(req) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session) {
       return NextResponse.json(
@@ -66,7 +97,7 @@ export async function POST(req) {
       );
     }
 
-    await connectDB();
+    await dbConnect();
 
     let wishlist = await Wishlist.findOne({ user: session.user.id });
 

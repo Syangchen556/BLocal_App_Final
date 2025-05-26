@@ -1,13 +1,13 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,31 +15,27 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setLoading(true);
+
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        setError("Unexpected server response.");
-        setLoading(false);
-        return;
-      }
+
+      const data = await res.json();
+
       if (!res.ok) {
-        setError(data.error || "Registration failed.");
+        setError(data.error || 'Registration failed.');
       } else {
-        setSuccess(data.message || "Registration successful!");
-        setTimeout(() => router.push("/auth/signin"), 1500);
+        setSuccess(data.message || 'Registration successful!');
+        setTimeout(() => router.push('/auth/signin'), 1500);
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -81,13 +77,16 @@ export default function RegisterPage() {
           className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? "Registering..." : "Register"}
+          {loading ? 'Registering...' : 'Register'}
         </button>
         {error && <div className="text-red-600 text-sm">{error}</div>}
         {success && <div className="text-green-600 text-sm">{success}</div>}
       </form>
       <p className="mt-4 text-sm text-center">
-        Already have an account? <a href="/auth/signin" className="text-green-700 underline">Sign in</a>
+        Already have an account?{' '}
+        <a href="/auth/signin" className="text-green-700 underline">
+          Sign in
+        </a>
       </p>
     </div>
   );

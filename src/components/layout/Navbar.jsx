@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -13,10 +13,12 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { cart } = useCart();
-  const { wishlist } = useWishlist();
+  const { wishlist, lastAction } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isWishlistAnimating, setIsWishlistAnimating] = useState(false);
+  const prevWishlistCountRef = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,9 +27,29 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
+  // Animate wishlist icon when items are added
+  useEffect(() => {
+    const wishlistItemsCount = wishlist?.items?.length || 0;
+    
+    // Animate when items are added (based on lastAction)
+    if (lastAction === 'add') {
+      setIsWishlistAnimating(true);
+      
+      // Reset animation after it completes
+      const timer = setTimeout(() => {
+        setIsWishlistAnimating(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    // Update the previous count reference
+    prevWishlistCountRef.current = wishlistItemsCount;
+  }, [wishlist, lastAction]);
 
   const cartItemsCount = cart?.items?.length || 0;
-  const wishlistItemsCount = wishlist?.length || 0;
+  const wishlistItemsCount = wishlist?.items?.length || 0;
 
   const isActive = (path) => pathname === path;
 
@@ -78,8 +100,9 @@ export default function Navbar() {
 
           {/* Right Side Icons */}
           <div className="hidden md:flex items-center space-x-6">
-            {session ? (
+            {session && session.user ? (
               <>
+                {/* Common links for all authenticated users */}
                 <Link href="/cart" className="relative text-gray-600 hover:text-green-600 transition-colors">
                   <FaShoppingCart className="h-6 w-6" />
                   {cartItemsCount > 0 && (
@@ -89,40 +112,59 @@ export default function Navbar() {
                   )}
                 </Link>
                 <Link href="/wishlist" className="relative text-gray-600 hover:text-green-600 transition-colors">
-                  <FaHeart className="h-6 w-6" />
+                  <FaHeart 
+                    className={`h-6 w-6 ${isWishlistAnimating ? 'animate-heartbeat text-red-500' : ''}`} 
+                  />
                   {wishlistItemsCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className={`absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ${isWishlistAnimating ? 'animate-pulse' : ''}`}>
                       {wishlistItemsCount}
                     </span>
                   )}
                 </Link>
-                <div className="relative group">
-                  <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
-                    <FaUser className="h-6 w-6" />
-                    <span>{session.user.name}</span>
-                  </button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
-                    <Link href="/dashboard" className="dropdown-item">
-                      <FaUser className="h-4 w-4" />
-                      Dashboard
+                
+                {/* Role-specific navigation links */}
+                {session.user.role && session.user.role.toUpperCase() === 'ADMIN' && (
+                  <Link href="/dashboard/admin" className="text-gray-600 hover:text-green-600 transition-colors font-medium">
+                    Admin Dashboard
+                  </Link>
+                )}
+                {session.user.role && session.user.role.toUpperCase() === 'SELLER' && (
+                  <>
+                    <Link href="/dashboard/seller" className="text-gray-600 hover:text-green-600 transition-colors">
+                      <FaStore className="h-6 w-6" title="Seller Dashboard" />
                     </Link>
-                    {session.user.role === 'seller' && (
-                      <>
-                        <Link href="/dashboard/seller" className="dropdown-item">
-                          <FaStore className="h-4 w-4" />
-                          Seller Dashboard
-                        </Link>
-                        <Link href="/shop" className="dropdown-item">
-                          <FaStore className="h-4 w-4" />
-                          My Shop
-                        </Link>
-                      </>
+                  </>
+                )}
+                {/* Buyer Dashboard link removed as requested */}
+                <div className="group relative">
+                  <button className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors">
+                    <FaUser className="h-6 w-6" />
+                    <span className="text-sm">{session.user.name}</span>
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
+                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      Profile Customization
+                    </Link>
+                    {session.user.role && session.user.role.toUpperCase() === 'ADMIN' && (
+                      <Link href="/dashboard/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    {session.user.role && session.user.role.toUpperCase() === 'SELLER' && (
+                      <Link href="/dashboard/seller" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Seller Dashboard
+                      </Link>
+                    )}
+                    {session.user.role && session.user.role.toUpperCase() === 'BUYER' && (
+                      <Link href="/dashboard/buyer" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Buyer Dashboard
+                      </Link>
                     )}
                     <button
                       onClick={() => signOut()}
-                      className="dropdown-item text-red-600 hover:bg-red-50"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     >
-                      <FaSignOutAlt className="h-4 w-4" />
+                      <FaSignOutAlt className="h-4 w-4 mr-2 inline" />
                       Sign Out
                     </button>
                   </div>
@@ -171,32 +213,39 @@ export default function Navbar() {
               <Link href="/help" className="block py-2 text-gray-600 hover:text-green-600">
                 Help
               </Link>
-              {session ? (
+              {session && session.user ? (
                 <>
                   <Link href="/cart" className="flex items-center py-2 text-gray-600 hover:text-green-600">
                     <FaShoppingCart className="h-5 w-5 mr-2" />
                     Cart ({cartItemsCount})
                   </Link>
                   <Link href="/wishlist" className="flex items-center py-2 text-gray-600 hover:text-green-600">
-                    <FaHeart className="h-5 w-5 mr-2" />
+                    <FaHeart className={`h-5 w-5 mr-2 ${isWishlistAnimating ? 'animate-heartbeat text-red-500' : ''}`} />
                     Wishlist ({wishlistItemsCount})
                   </Link>
-                  <Link href="/dashboard" className="flex items-center py-2 text-gray-600 hover:text-green-600">
+                  <Link href="/profile" className="flex items-center py-2 text-gray-600 hover:text-green-600">
                     <FaUser className="h-5 w-5 mr-2" />
-                    Dashboard
+                    Profile Customization
                   </Link>
-                  {session.user.role === 'seller' && (
-                    <>
-                      <Link href="/dashboard/seller" className="flex items-center py-2 text-gray-600 hover:text-green-600">
-                        <FaStore className="h-5 w-5 mr-2" />
-                        Seller Dashboard
-                      </Link>
-                      <Link href="/shop" className="flex items-center py-2 text-gray-600 hover:text-green-600">
-                        <FaStore className="h-5 w-5 mr-2" />
-                        My Shop
-                      </Link>
-                    </>
+                  {session.user.role && session.user.role.toUpperCase() === 'ADMIN' && (
+                    <Link href="/dashboard/admin" className="flex items-center py-2 text-gray-600 hover:text-green-600">
+                      <FaUser className="h-5 w-5 mr-2" />
+                      Admin Dashboard
+                    </Link>
                   )}
+                  {session.user.role && session.user.role.toUpperCase() === 'SELLER' && (
+                    <Link href="/dashboard/seller" className="flex items-center py-2 text-gray-600 hover:text-green-600">
+                      <FaStore className="h-5 w-5 mr-2" />
+                      Seller Dashboard
+                    </Link>
+                  )}
+                  {session.user.role && session.user.role.toUpperCase() === 'BUYER' && (
+                    <Link href="/dashboard/buyer" className="flex items-center py-2 text-gray-600 hover:text-green-600">
+                      <FaUser className="h-5 w-5 mr-2" />
+                      Buyer Dashboard
+                    </Link>
+                  )}
+                  {/* Become a Seller link removed as requested */}
                   <button
                     onClick={() => signOut()}
                     className="flex items-center py-2 text-red-600 hover:text-red-700"

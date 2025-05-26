@@ -23,7 +23,8 @@ export default function Blog() {
       const response = await fetch('/api/posts');
       if (!response.ok) throw new Error('Failed to fetch posts');
       const data = await response.json();
-      setBlogPosts(data);
+      console.log('Fetched blog posts:', data);
+      setBlogPosts(data.posts || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
@@ -162,14 +163,17 @@ export default function Blog() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map((post) => (
             <div
-              key={post.id}
+              key={post._id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
             >
               <div className="h-48 bg-gray-200">
                 <img
-                  src={post.imageUrl || '/images/default-blog.jpg'}
+                  src={post.coverImage || '/images/default-blog.jpg'}
                   alt={post.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = '/images/default-blog.jpg';
+                  }}
                 />
               </div>
               <div className="p-6">
@@ -179,23 +183,16 @@ export default function Blog() {
                 <p className="text-gray-600 mb-4">{post.excerpt}</p>
                 <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
                   <div className="flex items-center space-x-2">
-                    {post.author.image && (
-                      <img
-                        src={post.author.image}
-                        alt={post.author.name}
-                        className="w-6 h-6 rounded-full"
-                      />
-                    )}
-                    <span>{post.author.name}</span>
+                    <span>{post.author?.name || 'Unknown Author'}</span>
                   </div>
-                  <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(post.publishedAt || post.createdAt).toLocaleDateString()}</span>
                 </div>
 
                 {/* Post Interactions */}
                 <PostInteractions
                   post={post}
-                  onLike={() => handleLike(post.id)}
-                  onComment={(commentData) => handleComment(post.id, commentData)}
+                  onLike={() => handleLike(post._id)}
+                  onComment={(commentData) => handleComment(post._id, commentData)}
                 />
               </div>
             </div>

@@ -4,9 +4,209 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaBox, FaHistory, FaChartPie, FaDownload, FaShoppingCart, FaHeart, FaBell } from 'react-icons/fa';
+import { FaBox, FaHistory, FaChartPie, FaDownload, FaShoppingCart, FaHeart, FaBell, FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
+import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+
+// Cart Items Component
+function CartItems() {
+  const { cart, loading, removeFromCart, updateQuantity } = useCart();
+  const router = useRouter();
+
+  if (loading) {
+    return <div className="py-4 text-center"><LoadingSpinner size="sm" /></div>;
+  }
+
+  if (!cart || !cart.items || cart.items.length === 0) {
+    return (
+      <div className="py-8 text-center">
+        <FaShoppingCart className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+        <p className="text-gray-500">Your cart is empty</p>
+        <button
+          onClick={() => router.push('/products')}
+          className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+        >
+          Shop Now
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-gray-200">
+      {cart.items.slice(0, 3).map((item) => (
+        <div key={item.productId || item._id} className="py-4 flex items-center">
+          <div className="relative h-16 w-16 flex-shrink-0">
+            {item.product && item.product.imageUrl ? (
+              <Image
+                src={item.product.imageUrl}
+                alt={item.product.name || 'Product'}
+                fill
+                className="object-cover rounded-md"
+              />
+            ) : (
+              <div className="h-full w-full bg-gray-200 rounded-md flex items-center justify-center">
+                <FaShoppingCart className="text-gray-400" />
+              </div>
+            )}
+          </div>
+          <div className="ml-4 flex-1">
+            <h3 className="text-sm font-medium text-gray-900">
+              {item.product && item.product.name ? item.product.name : 'Product'}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {item.quantity} × Nu. {item.product && item.product.price ? item.product.price.toFixed(2) : '0.00'}
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => updateQuantity(item.productId || item._id, Math.max(1, item.quantity - 1))}
+              className="p-1 rounded-full hover:bg-gray-100"
+            >
+              <FaMinus className="h-3 w-3 text-gray-500" />
+            </button>
+            <span className="text-sm text-gray-700">{item.quantity}</span>
+            <button
+              onClick={() => updateQuantity(item.productId || item._id, item.quantity + 1)}
+              className="p-1 rounded-full hover:bg-gray-100"
+            >
+              <FaPlus className="h-3 w-3 text-gray-500" />
+            </button>
+          </div>
+          <button
+            onClick={() => removeFromCart(item.productId || item._id)}
+            className="ml-4 text-red-500 hover:text-red-700"
+          >
+            <FaTrash className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      {cart.items.length > 3 && (
+        <div className="py-4 text-center">
+          <button
+            onClick={() => router.push('/cart')}
+            className="text-green-600 hover:text-green-800 text-sm font-medium"
+          >
+            View all {cart.items.length} items
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Wishlist Items Component
+function WishlistItems() {
+  const { wishlist, loading, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
+  const router = useRouter();
+  const [isAdding, setIsAdding] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  if (loading) {
+    return <div className="py-4 text-center"><LoadingSpinner size="sm" /></div>;
+  }
+
+  if (!wishlist || !wishlist.items || wishlist.items.length === 0) {
+    return (
+      <div className="py-8 text-center">
+        <FaHeart className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+        <p className="text-gray-500">Your wishlist is empty</p>
+        <button
+          onClick={() => router.push('/products')}
+          className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+        >
+          Discover Products
+        </button>
+      </div>
+    );
+  }
+
+  const handleAddToCart = async (product) => {
+    try {
+      setIsAdding(true);
+      await addToCart(product);
+      // Import toast from react-hot-toast at the top of the file
+      // Using the Toast component from UI instead
+      setToast({
+        message: 'Added to cart successfully',
+        type: 'success'
+      });
+    } catch (error) {
+      setToast({
+        message: 'Failed to add to cart',
+        type: 'error'
+      });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {wishlist.items.slice(0, 3).map((item) => (
+          <div key={item.product?._id || item._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div className="relative h-32 mb-2">
+              <Image
+                src={item.product && item.product.imageUrl ? item.product.imageUrl : '/images/product-placeholder.jpg'}
+                alt={item.product && item.product.name ? item.product.name : 'Product'}
+                fill
+                className="object-cover rounded-md"
+              />
+            </div>
+            <h3 className="text-sm font-medium text-gray-900 mb-1">
+              {item.product && item.product.name ? item.product.name : 'Product'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+              {item.product && item.product.description ? item.product.description : 'No description available'}
+            </p>
+            <div className="flex justify-between items-center">
+              <p className="text-green-600 font-semibold">
+                Nu. {item.product && item.product.price ? item.product.price.toFixed(2) : '0.00'}
+              </p>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => item.product && handleAddToCart(item.product)}
+                  className="p-1 text-green-600 hover:text-green-800"
+                  disabled={isAdding || !item.product}
+                >
+                  <FaShoppingCart className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => removeFromWishlist(item.product?._id || item._id)}
+                  className="p-1 text-red-500 hover:text-red-700"
+                >
+                  <FaTrash className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {wishlist.items.length > 3 && (
+          <div className="col-span-full text-center py-2">
+            <button
+              onClick={() => router.push('/wishlist')}
+              className="text-green-600 hover:text-green-800 text-sm font-medium"
+            >
+              View all {wishlist.items.length} items
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  );
+}
 
 export default function BuyerDashboard() {
   const { data: session } = useSession();
@@ -22,7 +222,7 @@ export default function BuyerDashboard() {
       return;
     }
 
-    if (session.user.role !== 'BUYER') {
+    if (session.user.role.toUpperCase() !== 'BUYER') {
       router.push('/dashboard');
       return;
     }
@@ -215,6 +415,40 @@ export default function BuyerDashboard() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Cart Items */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Your Cart</h2>
+            <div className="flex items-center">
+              <FaShoppingCart className="text-gray-400 text-xl mr-2" />
+              <button
+                onClick={() => router.push('/cart')}
+                className="text-sm text-green-600 hover:text-green-800"
+              >
+                View All
+              </button>
+            </div>
+          </div>
+          <CartItems />
+        </div>
+
+        {/* Wishlist Items */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Your Wishlist</h2>
+            <div className="flex items-center">
+              <FaHeart className="text-gray-400 text-xl mr-2" />
+              <button
+                onClick={() => router.push('/wishlist')}
+                className="text-sm text-green-600 hover:text-green-800"
+              >
+                View All
+              </button>
+            </div>
+          </div>
+          <WishlistItems />
         </div>
 
         {/* Frequently Bought Products */}

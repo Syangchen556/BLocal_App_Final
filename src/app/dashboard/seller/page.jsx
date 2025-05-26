@@ -38,7 +38,7 @@ export default function SellerDashboard() {
       return;
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       router.push('/dashboard');
       return;
     }

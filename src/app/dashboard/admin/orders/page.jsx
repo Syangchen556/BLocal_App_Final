@@ -23,7 +23,7 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       router.push('/');
       return;
     }
@@ -83,10 +83,20 @@ export default function AdminOrders() {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.shop.name.toLowerCase().includes(searchQuery.toLowerCase());
+    // Check if user exists and has name/email properties
+    const userNameMatch = order.user && order.user.name ? 
+      order.user.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const userEmailMatch = order.user && order.user.email ? 
+      order.user.email.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    
+    // Check if any order item's shop matches the search query
+    const shopMatch = order.items && order.items.some(item => 
+      item.shop && item.shop.name && 
+      item.shop.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    const matchesSearch = userNameMatch || userEmailMatch || shopMatch || 
+      (order.orderNumber && order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     
@@ -210,7 +220,15 @@ export default function AdminOrders() {
                       <div className="text-sm text-gray-500">{order.user.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{order.shop.name}</div>
+                      <div className="text-sm text-gray-900">
+                        {order.items && order.items.length > 0 && order.items[0].shop ? 
+                          order.items[0].shop.name : 'Multiple Shops'}
+                        {order.items && order.items.length > 1 && 
+                          order.items.some((item, i) => 
+                            i > 0 && item.shop && order.items[0].shop && 
+                            item.shop._id !== order.items[0].shop._id
+                          ) && ' + others'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">${order.total}</div>

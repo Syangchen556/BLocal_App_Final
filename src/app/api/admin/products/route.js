@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import connectDB from '@/lib/mongodb';
+import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 
 // GET /api/admin/products - Get all products
 export async function GET(req) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -33,8 +33,8 @@ export async function GET(req) {
 // PATCH /api/admin/products/[id] - Update product status
 export async function PATCH(req) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -78,8 +78,8 @@ export async function PATCH(req) {
 // DELETE /api/admin/products/[id] - Delete product
 export async function DELETE(req) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

@@ -12,6 +12,83 @@ import {
   FaTimes,
 } from 'react-icons/fa';
 
+// Mapping of product names to specific images
+const fruitImageMap = {
+  'apple': '/images/products/fruits/apple.jpg',
+  'banana': '/images/products/fruits/banana.jpg',
+  'blueberry': '/images/products/fruits/blueberry.jpg',
+  'grapes': '/images/products/fruits/grapes.jpg',
+  'kiwi': '/images/products/fruits/kiwi.jpg',
+  'mango': '/images/products/fruits/mango.jpg',
+  'orange': '/images/products/fruits/orange.jpg',
+  'papaya': '/images/products/fruits/papaya.jpg',
+  'pineapple': '/images/products/fruits/pineapple.jpg',
+  'strawberry': '/images/products/fruits/strawberries.jpg',
+  'strawberries': '/images/products/fruits/strawberries.jpg',
+  'watermelon': '/images/products/fruits/watermelon.jpg'
+};
+
+const vegetableImageMap = {
+  'arugula': '/images/products/vegetables/arugula.jpg',
+  'bell pepper': '/images/products/vegetables/bell_pepper.jpg',
+  'pepper': '/images/products/vegetables/bell_pepper.jpg',
+  'broccoli': '/images/products/vegetables/broccoli.jpg',
+  'cabbage': '/images/products/vegetables/cabbage.jpg',
+  'carrot': '/images/products/vegetables/carrot.jpg',
+  'cauliflower': '/images/products/vegetables/cauliflower.jpg',
+  'cucumber': '/images/products/vegetables/cucumber.jpg',
+  'kale': '/images/products/vegetables/kale.jpg',
+  'lettuce': '/images/products/vegetables/lettuce.jpg',
+  'potato': '/images/products/vegetables/potato.jpg',
+  'spinach': '/images/products/vegetables/spinach.jpg',
+  'tomato': '/images/products/vegetables/tomato.jpg',
+  'zucchini': '/images/products/vegetables/zucchini.jpg'
+};
+
+// Default images for each category
+const defaultFruitImage = '/images/products/fruits/apple.jpg';
+const defaultVegetableImage = '/images/products/vegetables/carrot.jpg';
+const defaultImage = '/images/products/fruits/orange.jpg';
+
+// Function to get image based on product name
+const getImageByName = (productName, category) => {
+  if (!productName) return defaultImage;
+  
+  const name = productName.toLowerCase();
+  
+  // Check if the product name contains any of the fruit or vegetable names
+  if (category === 'fruits') {
+    for (const [fruitName, imagePath] of Object.entries(fruitImageMap)) {
+      if (name.includes(fruitName)) {
+        return imagePath;
+      }
+    }
+    return defaultFruitImage;
+  } else if (category === 'vegetables') {
+    for (const [vegName, imagePath] of Object.entries(vegetableImageMap)) {
+      if (name.includes(vegName)) {
+        return imagePath;
+      }
+    }
+    return defaultVegetableImage;
+  }
+  
+  // If no match or no category, check both maps
+  for (const [fruitName, imagePath] of Object.entries(fruitImageMap)) {
+    if (name.includes(fruitName)) {
+      return imagePath;
+    }
+  }
+  
+  for (const [vegName, imagePath] of Object.entries(vegetableImageMap)) {
+    if (name.includes(vegName)) {
+      return imagePath;
+    }
+  }
+  
+  return defaultImage;
+};
+
 export default function AdminProducts() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -22,7 +99,7 @@ export default function AdminProducts() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       router.push('/');
       return;
     }
@@ -195,8 +272,13 @@ export default function AdminProducts() {
                       <div className="flex items-center">
                         <div className="h-10 w-10 relative flex-shrink-0">
                           <Image
-                            src={product.images[0] || '/placeholder.png'}
-                            alt={product.name}
+                            src={(product.images && product.images.length > 0) 
+                              ? product.images[0] 
+                              : getImageByName(
+                                  product.name, 
+                                  typeof product.category === 'string' ? product.category.toLowerCase() : null
+                                )}
+                            alt={product.name || 'Product'}
                             fill
                             className="rounded-lg object-cover"
                           />
@@ -206,7 +288,9 @@ export default function AdminProducts() {
                             {product.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {product.description.substring(0, 50)}...
+                            {typeof product.description === 'string' 
+                              ? `${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}` 
+                              : 'No description available'}
                           </div>
                         </div>
                       </div>

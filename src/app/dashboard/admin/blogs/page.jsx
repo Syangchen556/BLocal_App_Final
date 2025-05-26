@@ -23,7 +23,7 @@ export default function AdminBlogs() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       router.push('/');
       return;
     }

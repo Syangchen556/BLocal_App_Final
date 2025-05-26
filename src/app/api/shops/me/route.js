@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import connectDB from '@/lib/mongodb';
+import { auth } from '@/lib/auth';
+import { dbConnect } from '@/lib/mongodb';
 import Shop from '@/models/Shop';
 import Product from '@/models/Product';
 import Order from '@/models/Order';
@@ -9,19 +8,28 @@ import Order from '@/models/Order';
 // GET /api/shops/me - Get seller's own shop
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await connectDB();
+    await dbConnect();
 
-    // Get seller's shop
-    const shop = await Shop.findOne({ owner: session.user.id });
+    // Get seller's shop - handle both ObjectId and email-based accounts
+    let shop;
+    
+    // First try to find by email for test accounts
+    shop = await Shop.findOne({ ownerEmail: session.user.email });
+    
+    // If not found and we have a valid ObjectId, try to find by owner ID
+    if (!shop && /^[0-9a-fA-F]{24}$/.test(session.user.id)) {
+      shop = await Shop.findOne({ owner: session.user.id });
+    }
+    
     if (!shop) {
       return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
     }
@@ -64,7 +72,7 @@ export async function GET(request) {
 // PUT /api/shops/me - Update seller's own shop
 export async function PUT(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -72,7 +80,7 @@ export async function PUT(request) {
       );
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json(
         { error: 'Only sellers can update shop data' },
         { status: 403 }
@@ -80,9 +88,18 @@ export async function PUT(request) {
     }
 
     const data = await request.json();
-    await connectDB();
+    await dbConnect();
 
-    const shop = await Shop.findOne({ owner: session.user.id });
+    // Get seller's shop - handle both ObjectId and email-based accounts
+    let shop;
+    
+    // First try to find by email for test accounts
+    shop = await Shop.findOne({ ownerEmail: session.user.email });
+    
+    // If not found and we have a valid ObjectId, try to find by owner ID
+    if (!shop && /^[0-9a-fA-F]{24}$/.test(session.user.id)) {
+      shop = await Shop.findOne({ owner: session.user.id });
+    }
 
     if (!shop) {
       return NextResponse.json(

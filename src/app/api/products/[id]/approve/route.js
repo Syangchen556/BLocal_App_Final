@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
+import Shop from '@/models/Shop';
+import { sendEmail } from '@/lib/email';
 
-export async function POST(req, { params }) {
+export async function PATCH(request, { params }) {
   try {
     const session = await getServerSession();
     if (!session || session.user.role !== 'ADMIN') {
@@ -14,10 +16,10 @@ export async function POST(req, { params }) {
     }
 
     await connectDB();
-    const { status } = await req.json();
-    const productId = params.id;
 
-    const product = await Product.findById(productId);
+    const { status, message } = await request.json();
+    const product = await Product.findById(params.id).populate('shop');
+    
     if (!product) {
       return NextResponse.json(
         { error: 'Product not found' },
@@ -25,19 +27,40 @@ export async function POST(req, { params }) {
       );
     }
 
+    // Update product status
     product.status = status;
-    product.reviewedAt = new Date();
-    product.reviewedBy = session.user.id;
+    product.statusHistory.push({
+      status,
+      message: message || `Product ${status} by admin`,
+      timestamp: new Date(),
+      updatedBy: session.user.id
+    });
+
     await product.save();
 
-    // TODO: Send notification to seller about product status
-    // This would typically be handled by a notification service
+    // Send notification to seller
+    if (product.shop && product.shop.owner) {
+      const shop = await Shop.findById(product.shop._id).populate('owner');
+      if (shop && shop.owner.email) {
+        await sendEmail({
+          to: shop.owner.email,
+          subject: `Product ${status}: ${product.name}`,
+          text: `Your product "${product.name}" has been ${status.toLowerCase()}.\n\n${message || ''}\n\nView your product: ${process.env.NEXT_PUBLIC_APP_URL}/products/${product._id}`,
+          html: `
+            <h2>Product ${status}</h2>
+            <p>Your product "${product.name}" has been ${status.toLowerCase()}.</p>
+            ${message ? `<p>${message}</p>` : ''}
+            <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/products/${product._id}">View your product</a></p>
+          `
+        });
+      }
+    }
 
     return NextResponse.json(product);
   } catch (error) {
     console.error('Error updating product status:', error);
     return NextResponse.json(
-      { error: 'Error updating product status' },
+      { error: 'Failed to update product status' },
       { status: 500 }
     );
   }

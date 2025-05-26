@@ -4,15 +4,19 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaHeart, FaShoppingCart, FaTrash } from 'react-icons/fa';
+import { FaHeart, FaShoppingCart, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useCart } from '@/contexts/CartContext';
+import WishlistProductCard from '@/components/products/WishlistProductCard';
 
 export default function WishlistPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [wishlistItems, setWishlistItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { wishlist, loading, error, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     if (!session) {
@@ -20,72 +24,35 @@ export default function WishlistPage() {
       return;
     }
 
-    if (session.user.role !== 'BUYER') {
+    if (session.user.role.toUpperCase() !== 'BUYER') {
       router.push('/dashboard');
       return;
     }
-
-    fetchWishlistItems();
   }, [session, router]);
 
-  const fetchWishlistItems = async () => {
+  const handleRemoveFromWishlist = async (productId) => {
     try {
-      const response = await fetch('/api/wishlist');
-      if (response.ok) {
-        const data = await response.json();
-        setWishlistItems(data.items);
-      }
+      await removeFromWishlist(productId);
+      toast.success('Removed from wishlist');
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
-      toast.error('Failed to load wishlist items');
+      toast.error('Failed to remove from wishlist');
+    }
+  };
+
+  const handleAddToCart = async (product) => {
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    try {
+      setIsAdding(true);
+      await addToCart(product);
+      toast.success('Added to cart');
+    } catch (error) {
+      toast.error('Failed to add to cart');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const removeFromWishlist = async (productId) => {
-    try {
-      const response = await fetch(`/api/wishlist/${productId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setWishlistItems(items => items.filter(item => item.product._id !== productId));
-        toast.success('Item removed from wishlist');
-      }
-    } catch (error) {
-      console.error('Error removing from wishlist:', error);
-      toast.error('Failed to remove item from wishlist');
-    }
-  };
-
-  const addToCart = async (productId) => {
-    try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: 1,
-        }),
-      });
-
-      if (response.ok) {
-        // Trigger cart animation
-        const cartIcon = document.querySelector('[data-testid="cart-icon"]');
-        if (cartIcon) {
-          cartIcon.classList.add('animate-bounce');
-          setTimeout(() => {
-            cartIcon.classList.remove('animate-bounce');
-          }, 1000);
-        }
-        toast.success('Added to cart successfully');
-      }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart');
+      setIsAdding(false);
     }
   };
 
@@ -93,6 +60,7 @@ export default function WishlistPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
+        <p className="ml-2">Loading your wishlist...</p>
       </div>
     );
   }
@@ -100,56 +68,44 @@ export default function WishlistPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center mb-8">
-          <FaHeart className="text-2xl text-red-500 mr-3" />
+        <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-gray-900">My Wishlist</h1>
+          <button 
+            onClick={() => router.push('/dashboard/buyer')}
+            className="flex items-center text-gray-600 hover:text-green-600 transition-colors"
+          >
+            <FaArrowLeft className="mr-2" />
+            Back to Dashboard
+          </button>
         </div>
 
-        {wishlistItems.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <p className="text-gray-500">Your wishlist is empty</p>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        {!wishlist?.items || wishlist.items.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow-md">
+            <FaHeart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
+            <p className="text-gray-500 mb-4">Save items you'd like to buy later!</p>
             <button
-              onClick={() => router.push('/')}
-              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              onClick={() => router.push('/shop')}
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              Continue Shopping
+              Browse Products
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {wishlistItems.map((item) => (
-              <div key={item.product._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="relative h-48">
-                  <Image
-                    src={item.product.image || '/images/placeholder.png'}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">{item.product.name}</h2>
-                  <p className="text-gray-600 mb-2">{item.product.description}</p>
-                  <p className="text-lg font-bold text-green-600 mb-4">Nu. {item.product.price}</p>
-                  
-                  <div className="flex justify-between items-center">
-                    <button
-                      onClick={() => addToCart(item.product._id)}
-                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                    >
-                      <FaShoppingCart className="mr-2" />
-                      Add to Cart
-                    </button>
-                    <button
-                      onClick={() => removeFromWishlist(item.product._id)}
-                      className="text-red-500 hover:text-red-700"
-                      aria-label="Remove from wishlist"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {wishlist.items.map((item) => (
+              <WishlistProductCard
+                key={item.product._id}
+                product={item.product}
+                onAddToCart={handleAddToCart}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+              />
             ))}
           </div>
         )}

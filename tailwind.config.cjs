@@ -13,6 +13,13 @@ module.exports = {
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(4px)' },
         },
+        heartbeat: {
+          '0%': { transform: 'scale(1)' },
+          '25%': { transform: 'scale(1.3)' },
+          '50%': { transform: 'scale(1)' },
+          '75%': { transform: 'scale(1.3)' },
+          '100%': { transform: 'scale(1)' },
+        },
         slideUp: {
           '0%': { transform: 'translateY(100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
@@ -36,6 +43,7 @@ module.exports = {
         slideDown: 'slideDown 0.3s ease-out',
         fadeIn: 'fadeIn 0.3s ease-out',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        heartbeat: 'heartbeat 0.5s ease-in-out',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

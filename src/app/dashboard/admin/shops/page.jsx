@@ -27,7 +27,7 @@ export default function AdminShopsPage() {
     if (status === 'loading') return;
 
     // Redirect if not admin
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       router.push('/dashboard');
       return;
     }
@@ -50,7 +50,7 @@ export default function AdminShopsPage() {
       // Calculate statistics
       const stats = {
         total: data.length,
-        pending: data.filter(shop => shop.status === 'pending').length,
+        pending: data.filter(shop => shop.status === 'inactive').length, // inactive is our pending state
         approved: data.filter(shop => shop.status === 'active').length,
         rejected: data.filter(shop => shop.status === 'rejected').length
       };
@@ -65,6 +65,24 @@ export default function AdminShopsPage() {
 
   const handleStatusUpdate = async (shopId, newStatus, message = '') => {
     try {
+      // Show confirmation dialog for important actions
+      if (newStatus === 'active' || newStatus === 'rejected') {
+        if (!confirm(`Are you sure you want to ${newStatus === 'active' ? 'approve' : 'reject'} this shop?`)) {
+          return;
+        }
+      }
+      
+      // Default messages for different status changes
+      if (!message) {
+        if (newStatus === 'active') {
+          message = 'Shop approved by admin. You can now start adding products.';
+        } else if (newStatus === 'rejected') {
+          message = 'Shop request rejected by admin. Please contact support for more information.';
+        } else if (newStatus === 'inactive') {
+          message = 'Shop deactivated by admin.';
+        }
+      }
+      
       const response = await fetch('/api/admin/shops', {
         method: 'PATCH',
         headers: {
@@ -73,7 +91,8 @@ export default function AdminShopsPage() {
         body: JSON.stringify({ 
           shopId, 
           status: newStatus,
-          message 
+          message,
+          notifySeller: true // Add flag to send notification to seller
         }),
       });
 
@@ -94,14 +113,23 @@ export default function AdminShopsPage() {
       case 'active':
         return 'bg-green-100 text-green-800';
       case 'pending':
+      case 'inactive': // inactive is our pending state
         return 'bg-yellow-100 text-yellow-800';
-      case 'inactive':
+      case 'rejected':
         return 'bg-red-100 text-red-800';
       case 'suspended':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+  
+  // Format status for display
+  const formatStatus = (status) => {
+    if (status === 'inactive') {
+      return 'Pending';
+    }
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const filteredShops = shops.filter(shop =>
@@ -275,7 +303,7 @@ export default function AdminShopsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(shop.status)}`}>
-                      {shop.status.charAt(0).toUpperCase() + shop.status.slice(1)}
+                      {formatStatus(shop.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -285,18 +313,52 @@ export default function AdminShopsPage() {
                     >
                       View
                     </Link>
-                    {shop.status !== 'suspended' && (
+                    {shop.status === 'inactive' ? (
+                      <>
+                        <button
+                          onClick={() => handleStatusUpdate(
+                            shop._id, 
+                            'active',
+                            'Shop approved by admin. You can now start adding products.'
+                          )}
+                          className="text-blue-600 hover:text-blue-900 mr-2"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(
+                            shop._id, 
+                            'rejected',
+                            'Shop request rejected by admin. Please contact support for more information.'
+                          )}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : shop.status === 'active' ? (
                       <button
                         onClick={() => handleStatusUpdate(
                           shop._id, 
-                          shop.status === 'active' ? 'inactive' : 'active',
-                          `Shop ${shop.status === 'active' ? 'deactivated' : 'activated'} by admin`
+                          'inactive',
+                          'Shop deactivated by admin.'
                         )}
                         className="text-blue-600 hover:text-blue-900"
                       >
-                        {shop.status === 'active' ? 'Deactivate' : 'Activate'}
+                        Deactivate
                       </button>
-                    )}
+                    ) : shop.status === 'rejected' ? (
+                      <button
+                        onClick={() => handleStatusUpdate(
+                          shop._id, 
+                          'inactive',
+                          'Shop request reactivated for review.'
+                        )}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Review Again
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               ))}

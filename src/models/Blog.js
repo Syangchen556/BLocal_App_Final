@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { autoGenerateSlug } from '@/utils/slugify';
+import { autoGenerateSlug } from '../utils/slugGenerator.js';
 
 const commentSchema = new mongoose.Schema({
   author: {
@@ -117,7 +117,12 @@ BlogSchema.index({ 'metadata.views': -1 }); // For popular blogs
 BlogSchema.index({ tags: 1 }); // For tag-based queries
 
 // Auto-generate slug from title
-BlogSchema.pre('save', autoGenerateSlug('title'));
+BlogSchema.pre('save', async function(next) {
+  if (!this.slug) {
+    this.slug = autoGenerateSlug(this.title);
+  }
+  next();
+});
 
 // Virtual for comment count
 BlogSchema.virtual('commentCount').get(function() {

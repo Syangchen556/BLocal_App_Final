@@ -3,14 +3,34 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
-export default function Hero() {
+export default function Hero({ onSearchResults }) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    // TODO: Implement search functionality
-    console.log('Searching for:', searchQuery);
+    if (!searchQuery.trim()) return;
+    
+    try {
+      toast.loading('Searching products...', { id: 'search' });
+      const response = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery)}`);
+      
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+      
+      const data = await response.json();
+      toast.success(`Found ${data.total || 0} results`, { id: 'search' });
+      
+      // Update the products list in the parent component
+      if (typeof onSearchResults === 'function') {
+        onSearchResults(data);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Failed to search products', { id: 'search' });
+    }
   };
 
   return (
@@ -75,7 +95,7 @@ export default function Hero() {
             {/* CTA Buttons */}
             <div className="flex gap-4 pt-4">
               <Link
-                href="/products"
+                href="/shop"
                 className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 Shop Now

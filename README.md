@@ -1,40 +1,34 @@
-<<<<<<< HEAD
-# Blocal - Local Marketplace Platform
+# BLocal - Local Marketplace Platform
 
-A Next.js-based marketplace platform for local businesses with role-based authentication and comprehensive shop management.
-=======
-# BLocal - Local Marketplace
-
-A Next.js-based online marketplace for local products with role-based authentication and MongoDB Atlas integration.
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
+A Next.js-based marketplace platform for local businesses with role-based authentication, comprehensive shop management, and MongoDB Atlas integration.
 
 ## Features
 
 - Role-based authentication (Admin, Seller, Buyer)
-<<<<<<< HEAD
 - Comprehensive shop management system
 - Product catalog with categories and variants
 - Shopping cart and wishlist functionality
 - User dashboards based on roles
 - Shop verification and approval system
 - Rating and review system
-- Order management
-- Analytics and statistics
-=======
+- Order management and analytics
 - MongoDB Atlas integration for cloud database
 - Beautiful and responsive UI with Tailwind CSS
-- Product catalog with categories and search
-- Shopping cart with animations
-- Wishlist functionality
 - Blog system with user-generated content
-- Shop profiles and analytics
 - Real-time product reviews and ratings
 - Bhutanese Ngultrum (Nu.) currency support
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
 
 ## Tech Stack
 
-<<<<<<< HEAD
+- Next.js 14
+- MongoDB Atlas
+- NextAuth.js for authentication
+- Tailwind CSS for styling
+- React Icons
+- React Hot Toast for notifications
+
+## Test Accounts
+
 ```
 Admin:
 - Email: admin@blocal.bt
@@ -45,17 +39,9 @@ Seller:
 - Password: seller123
 
 Buyer:
-- Email: buyer@blocal.bt
+- Email: buyer1@blocal.bt
 - Password: buyer123
 ```
-=======
-- Next.js 14
-- MongoDB Atlas
-- NextAuth.js for authentication
-- Tailwind CSS for styling
-- React Icons
-- React Hot Toast for notifications
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
 
 ## Prerequisites
 
@@ -69,7 +55,7 @@ Buyer:
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd blocal-app
+cd blocal-marketplace
 ```
 
 2. Install dependencies:
@@ -77,21 +63,14 @@ cd blocal-app
 npm install
 ```
 
-<<<<<<< HEAD
 3. Set up environment variables:
 Create a `.env.local` file in the root directory with the following variables:
 ```env
-MONGODB_URI=your_mongodb_uri
-=======
-3. Create a `.env.local` file in the root directory with the following variables:
-```env
 MONGODB_URI=your_mongodb_atlas_connection_string
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
 NEXTAUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-<<<<<<< HEAD
 4. Seed the database:
 ```bash
 npm run seed
@@ -100,18 +79,11 @@ yarn seed
 ```
 
 5. Run the development server:
-=======
-4. Run the development server:
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
 ```bash
 npm run dev
 ```
 
-<<<<<<< HEAD
 6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-=======
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
 
 ## Project Structure
 
@@ -119,51 +91,45 @@ npm run dev
 ├── src/
 │   ├── app/                 # Next.js app directory
 │   │   ├── api/            # API routes
-<<<<<<< HEAD
-│   │   │   ├── shops/     # Shop management endpoints
+│   │   │   ├── admin/     # Admin-specific endpoints
+│   │   │   ├── auth/      # Authentication endpoints
+│   │   │   ├── cart/      # Cart management endpoints
 │   │   │   ├── products/  # Product management endpoints
-│   │   │   └── auth/      # Authentication endpoints
+│   │   │   ├── shops/     # Shop management endpoints
+│   │   │   └── wishlist/  # Wishlist management endpoints
 │   │   ├── auth/          # Authentication pages
-│   │   ├── dashboard/     # Dashboard pages
+│   │   ├── blog/          # Blog pages
+│   │   ├── cart/          # Shopping cart pages
+│   │   ├── dashboard/     # Dashboard pages (admin, seller, buyer)
+│   │   ├── products/      # Product pages
+│   │   ├── shops/         # Shop pages
+│   │   ├── wishlist/      # Wishlist pages
 │   │   └── page.jsx       # Homepage
 │   ├── components/        # React components
-│   │   ├── home/         # Homepage components
 │   │   ├── layout/       # Layout components
 │   │   ├── products/     # Product-related components
-│   │   └── shops/        # Shop-related components
+│   │   ├── shops/        # Shop-related components
+│   │   └── ui/           # UI components
+│   ├── contexts/         # React contexts (CartContext, WishlistContext)
+│   ├── lib/              # Utility libraries
+│   │   ├── auth.js       # Authentication configuration
+│   │   └── mongodb.js    # Database connection
 │   ├── models/           # MongoDB models
 │   ├── utils/            # Utility functions
 │   └── styles/           # Global styles
 ├── public/               # Static files
 └── package.json         # Project dependencies
-=======
-│   │   ├── auth/           # Authentication pages
-│   │   ├── blog/           # Blog pages
-│   │   ├── cart/           # Shopping cart
-│   │   ├── dashboard/      # User dashboards
-│   │   ├── products/       # Product pages
-│   │   ├── shops/          # Shop pages
-│   │   └── wishlist/       # Wishlist pages
-│   ├── components/         # React components
-│   │   ├── ui/            # UI components
-│   │   ├── products/      # Product components
-│   │   └── layout/        # Layout components
-│   ├── lib/               # Utility functions
-│   └── models/            # MongoDB models
-├── public/                # Static files
-└── package.json          # Project dependencies
->>>>>>> ce08c47481366906128db17c6bd3eaf53dc5d6a3
 ```
 
 ## Features by Role
 
 ### Admin
-<<<<<<< HEAD
-- User management
-- Shop verification and approval
+- User and shop management
+- Shop verification and approval system
+- Product approval and moderation
 - Analytics dashboard
-- Product approval
 - Category management
+- Blog moderation
 - System configuration
 
 ### Seller
@@ -178,6 +144,7 @@ npm run dev
   - Set pricing and variants
 - Order management
 - Sales analytics
+- Blog creation
 - Customer feedback
 
 ### Buyer

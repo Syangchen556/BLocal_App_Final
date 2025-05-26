@@ -68,7 +68,7 @@ export default function AdminAnalytics() {
   });
 
   useEffect(() => {
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       router.push('/');
       return;
     }

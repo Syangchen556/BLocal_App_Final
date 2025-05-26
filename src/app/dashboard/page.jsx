@@ -116,6 +116,16 @@ const BuyerDashboard = () => (
           Manage Settings →
         </Link>
       </div>
+      <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+        <div className="flex items-center mb-4">
+          <FaShoppingBag className="text-blue-500 text-2xl mr-3" />
+          <h3 className="text-xl font-semibold">Cart</h3>
+        </div>
+        <p className="text-gray-600 mb-4">View your cart items</p>
+        <Link href="/cart" className="text-green-600 hover:text-green-700">
+          View Cart →
+        </Link>
+      </div>
     </div>
   </div>
 );
@@ -137,14 +147,28 @@ export default function Dashboard() {
   if (!session) {
     redirect('/auth/signin');
   }
+  
+  // Get user role and convert to uppercase for case-insensitive comparison
+  const userRole = session.user.role?.toUpperCase();
+
+  // Redirect to specific dashboard based on role
+  if (userRole === 'ADMIN') {
+    redirect('/dashboard/admin');
+  } else if (userRole === 'SELLER') {
+    redirect('/dashboard/seller');
+  } else if (userRole === 'BUYER') {
+    redirect('/dashboard/buyer');
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        {session.user.role === 'admin' && <AdminDashboard />}
-        {session.user.role === 'seller' && <SellerDashboard />}
-        {session.user.role === 'buyer' && <BuyerDashboard />}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Welcome to Your Dashboard</h2>
+          <p className="text-gray-600 mb-8">Loading your personalized dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+        </div>
       </div>
     </div>
   );
-} 
+}

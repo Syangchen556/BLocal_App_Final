@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import connectDB from '@/lib/mongodb';
+import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
 import Order from '@/models/Order';
 
 // GET /api/admin/orders - Get all orders
 export async function GET(req) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -18,8 +18,8 @@ export async function GET(req) {
 
     const orders = await Order.find({})
       .populate('user', 'name email')
-      .populate('shop', 'name')
       .populate('items.product', 'name price')
+      .populate('items.shop', 'name')
       .sort({ createdAt: -1 });
 
     return NextResponse.json(orders);
@@ -35,8 +35,8 @@ export async function GET(req) {
 // PATCH /api/admin/orders/[id] - Update order status
 export async function PATCH(req) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -60,8 +60,8 @@ export async function PATCH(req) {
       { new: true }
     )
       .populate('user', 'name email')
-      .populate('shop', 'name')
-      .populate('items.product', 'name price');
+      .populate('items.product', 'name price')
+      .populate('items.shop', 'name');
 
     if (!order) {
       return NextResponse.json(
@@ -83,8 +83,8 @@ export async function PATCH(req) {
 // DELETE /api/admin/orders/[id] - Delete order
 export async function DELETE(req) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

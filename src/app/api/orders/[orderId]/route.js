@@ -1,47 +1,44 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import connectDB from '@/lib/mongodb';
-import Order from '@/models/Order';
-import Shop from '@/models/Shop';
+import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    const db = await connectDB();
 
     const { orderId } = params;
 
     // Find order
-    const order = await Order.findById(orderId)
-      .populate('customer', 'name email phone')
-      .populate('items.product', 'name images price')
-      .populate('items.shop', 'name');
+    const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     // Check if user is authorized to view this order
-    if (session.user.role === 'SELLER') {
+    if (session.user.role && session.user.role.toUpperCase() === 'SELLER') {
       // Get seller's shop
-      const shop = await Shop.findOne({ owner: session.user.id });
+      const shop = await db.collection('shops').findOne({ ownerId: session.user.id });
       if (!shop) {
         return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
       }
 
       // Check if order contains items from seller's shop
-      const hasShopItems = order.items.some(item => item.shop._id.toString() === shop._id.toString());
+      const hasShopItems = order.items.some(item => 
+        item.shopId && item.shopId.toString() === shop._id.toString()
+      );
       if (!hasShopItems) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
-    } else if (session.user.role === 'BUYER') {
+    } else if (session.user.role && session.user.role.toUpperCase() === 'BUYER') {
       // Check if order belongs to buyer
-      if (order.customer._id.toString() !== session.user.id) {
+      if (order.userId !== session.user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
