@@ -2,6 +2,7 @@ import { dbConnect } from './mongodb';
 import bcrypt from 'bcryptjs';
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { getServerSession } from 'next-auth/next';
 
 // Auth configuration that can be used with both NextAuth v5 and getServerSession
 export const authOptions = {
@@ -131,10 +132,9 @@ export const authOptions = {
 };
 
 // NextAuth v5 configuration
-export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth(authOptions);
+export const auth = NextAuth(authOptions);
 
-// For compatibility with older API routes
-// NextAuth v5 doesn't export getServerSession directly, so we create a wrapper function
-export const getServerSession = async () => {
+// For backward compatibility with existing code
+export async function getServerSession() {
   return await auth();
 };

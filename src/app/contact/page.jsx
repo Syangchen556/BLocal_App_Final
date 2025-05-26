@@ -50,7 +50,7 @@ export default function ContactPage() {
         <div className="relative h-full flex items-center justify-center text-center">
           <div className="max-w-3xl px-4">
             <h1 className="text-4xl font-bold mb-2 text-green-800">Contact Us</h1>
-            <p className="text-lg text-green-600">We'd love to hear from you</p>
+            <p className="text-lg text-green-600">We&apos;d love to hear from you</p>
           </div>
         </div>
       </div>

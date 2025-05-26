@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaLeaf, FaTruck, FaHandshake, FaShieldAlt } from 'react-icons/fa';
+import { FaLeaf, FaTruck, FaHandshake, FaShieldAlt, FaUsers } from 'react-icons/fa';
 
 export default function LearnMorePage() {
   const [activeSection, setActiveSection] = useState('overview');
@@ -16,7 +16,7 @@ export default function LearnMorePage() {
         <div className="relative h-full flex items-center justify-center text-center text-white">
           <div className="max-w-3xl px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Learn More About Bhutan Fresh Market</h1>
-            <p className="text-xl">Discover how we're revolutionizing the way fresh produce reaches your table</p>
+            <p className="text-xl">Discover how we&apos;re revolutionizing the way fresh produce reaches your table</p>
           </div>
         </div>
       </div>

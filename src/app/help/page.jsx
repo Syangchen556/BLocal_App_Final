@@ -239,7 +239,7 @@ export default function HelpCenter() {
       <div className="max-w-4xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Help Center</h1>
         <p className="text-lg text-gray-600 mb-8">
-          We're here to help. Search for a topic or browse common questions.
+          We&apos;re here to help. Search for a topic or browse common questions.
         </p>
         
         {/* Enhanced Search Bar */}
@@ -307,7 +307,7 @@ export default function HelpCenter() {
       {searchQuery && (
         <div className="max-w-4xl mx-auto mb-8 text-center">
           <p className="text-gray-600">
-            Showing results for "{searchQuery}"
+            Showing results for &quot;{searchQuery}&quot;
           </p>
         </div>
       )}

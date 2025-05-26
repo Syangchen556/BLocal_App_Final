@@ -87,7 +87,7 @@ export default function ShopProfile() {
             <FaStore className="mx-auto h-12 w-12 text-yellow-500" />
             <h2 className="mt-4 text-2xl font-bold text-gray-900">Shop Under Review</h2>
             <p className="mt-2 text-gray-600">
-              Your shop registration is currently under review. We'll notify you once it's approved.
+              Your shop registration is currently under review. We&apos;ll notify you once it&apos;s approved.
             </p>
             <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h3 className="text-lg font-medium text-yellow-800">Shop Details</h3>

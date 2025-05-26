@@ -154,7 +154,7 @@ export default function CreateShop() {
             <h1 className="text-2xl font-bold">Welcome to BLocal!</h1>
           </div>
           <p className="mb-4">
-            You're just a few steps away from starting your online shop. Fill out the form below to begin your journey as a seller.
+            You&apos;re just a few steps away from starting your online shop. Fill out the form below to begin your journey as a seller.
           </p>
           <div className="bg-white/10 rounded-lg p-4">
             <h3 className="font-semibold mb-2">What happens next?</h3>

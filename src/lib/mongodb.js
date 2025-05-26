@@ -58,6 +58,9 @@ export async function connectDB() {
   return client.db(); // defaults to the database in your URI
 }
 
+// Also export as default for backward compatibility
+export default connectDB;
+
 // Connect to MongoDB using Mongoose
 export { dbConnect };
 

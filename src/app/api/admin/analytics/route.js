@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { connectDB } from '@/lib/mongodb';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Order from '@/models/Order';
 import Product from '@/models/Product';
@@ -9,9 +8,9 @@ import Shop from '@/models/Shop';
 
 export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
