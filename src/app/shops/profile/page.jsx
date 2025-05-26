@@ -62,7 +62,7 @@ export default function ShopProfile() {
             <FaStore className="mx-auto h-12 w-12 text-blue-500" />
             <h2 className="mt-4 text-2xl font-bold text-gray-900">Start Your Shop</h2>
             <p className="mt-2 text-gray-600">
-              You haven't created a shop yet. Start selling your products by creating your shop now.
+              You haven&apos;t created a shop yet. Start selling your products by creating your shop now.
             </p>
             <div className="mt-6">
               <Button

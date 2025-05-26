@@ -97,7 +97,7 @@ export default function AboutPage() {
                     <FaLeaf className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2 text-green-700">Sustainability</h3>
-                  <p className="text-gray-600">We're committed to environmentally friendly practices in everything we do.</p>
+                  <p className="text-gray-600">We&apos;re committed to environmentally friendly practices in everything we do.</p>
                 </div>
                 <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-lg transition-shadow">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 text-green-500 mb-4">
