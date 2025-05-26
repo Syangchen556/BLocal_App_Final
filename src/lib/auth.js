@@ -134,9 +134,9 @@ export const authOptions = {
 export const auth = NextAuth(authOptions);
 
 // For backward compatibility with existing code
-export async function getServerAuthSession() {
+export async function getAuthSession() {
   return await auth();
 };
 
 // Export auth as getServerSession for compatibility
-export const getServerSession = getServerAuthSession;
+export const getServerSession = getAuthSession;
