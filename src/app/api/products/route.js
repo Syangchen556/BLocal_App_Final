@@ -92,7 +92,7 @@ async function GET(req) {
 async function POST(req) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== 'SELLER') {
+    if (!session || session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -149,14 +149,14 @@ async function PUT(req) {
 
     // Check authorization
     if (
-      session.user.role === 'SELLER' &&
+      session.user.role.toUpperCase() === 'SELLER' &&
       product.sellerId !== session.user.id
     ) {
       return NextResponse.json({ error: 'You can only update your own products' }, { status: 403 });
     }
 
     // Only allow admins to update status
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role.toUpperCase() !== 'ADMIN') {
       delete updateData.status;
     }
 
@@ -195,7 +195,7 @@ async function DELETE(req) {
 
     // Check authorization
     if (
-      session.user.role === 'SELLER' &&
+      session.user.role.toUpperCase() === 'SELLER' &&
       product.sellerId !== session.user.id
     ) {
       return NextResponse.json({ error: 'You can only delete your own products' }, { status: 403 });

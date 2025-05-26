@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Shop from '@/models/Shop';
 import Blog from '@/models/Blog';
@@ -38,7 +38,7 @@ export async function GET(request, { params }) {
 // POST /api/shops/[shopId]/featured-blogs - Add a blog to featured blogs
 export async function POST(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -104,7 +104,7 @@ export async function POST(request, { params }) {
 // DELETE /api/shops/[shopId]/featured-blogs - Remove a blog from featured blogs
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },

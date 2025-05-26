@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
+
 import connectDB from '@/lib/db';
 import Shop from '@/models/Shop';
 import Product from '@/models/Product';
@@ -9,12 +9,12 @@ import Order from '@/models/Order';
 // GET /api/shops/me - Get seller's own shop
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -64,7 +64,7 @@ export async function GET(request) {
 // PUT /api/shops/me - Update seller's own shop
 export async function PUT(request) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     
     if (!session) {
       return NextResponse.json(
@@ -73,7 +73,7 @@ export async function PUT(request) {
       );
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json(
         { error: 'Only sellers can update shop data' },
         { status: 403 }
@@ -133,7 +133,7 @@ export async function PUT(request) {
 // Create or update my shop
 export async function POST(req) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     
     if (!session) {
       return NextResponse.json(
@@ -142,7 +142,7 @@ export async function POST(req) {
       );
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json(
         { error: 'Only sellers can create shops' },
         { status: 403 }
@@ -206,7 +206,7 @@ export async function POST(req) {
 // Delete my shop
 export async function DELETE(req) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -214,7 +214,7 @@ export async function DELETE(req) {
       );
     }
 
-    if (session.user.role !== 'SELLER') {
+    if (session.user.role.toUpperCase() !== 'SELLER') {
       return NextResponse.json(
         { error: 'Only sellers can manage shops' },
         { status: 403 }

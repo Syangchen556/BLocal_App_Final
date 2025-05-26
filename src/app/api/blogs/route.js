@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
+
 import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 
@@ -70,7 +70,7 @@ export async function GET(request) {
 // POST /api/blogs - Create a new blog
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },

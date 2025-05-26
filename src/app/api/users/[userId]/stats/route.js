@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
-import { authOptions } from '@/lib/auth';
+
 import User from '@/models/User';
 import Order from '@/models/Order';
 
 export async function GET(req, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const { userId } = params;
 
     // Check if user is authorized (either admin or the user themselves)
-    if (!session || (session.user.role !== 'ADMIN' && session.user._id.toString() !== userId)) {
+    if (!session || (session.user.role.toUpperCase() !== 'ADMIN' && session.user._id.toString() !== userId)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

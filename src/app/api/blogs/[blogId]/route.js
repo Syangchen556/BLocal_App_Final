@@ -61,7 +61,7 @@ export async function PUT(request, { params }) {
     }
 
     // Check ownership
-    if (blog.author.toString() !== session.user.id && session.user.role !== 'ADMIN') {
+    if (blog.author.toString() !== session.user.id && session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -117,7 +117,7 @@ export async function PUT(request, { params }) {
 // DELETE /api/blogs/[blogId] - Delete a blog
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -136,7 +136,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Check ownership
-    if (blog.author.toString() !== session.user.id && session.user.role !== 'ADMIN') {
+    if (blog.author.toString() !== session.user.id && session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

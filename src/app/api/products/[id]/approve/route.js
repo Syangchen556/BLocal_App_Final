@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
 import Shop from '@/models/Shop';
@@ -7,8 +7,8 @@ import { sendEmail } from '@/lib/email';
 
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession();
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await auth();
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
-import { authOptions } from '@/lib/auth';
+
 import Shop from '@/models/Shop';
 import Product from '@/models/Product';
 import Order from '@/models/Order';
 
 export async function GET(req, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const { shopId } = params;
 
     // Check if user is authorized (either admin or shop owner)
@@ -20,7 +20,7 @@ export async function GET(req, { params }) {
       );
     }
 
-    if (!session || (session.user.role !== 'ADMIN' && session.user._id.toString() !== shop.owner.toString())) {
+    if (!session || (session.user.role.toUpperCase() !== 'ADMIN' && session.user._id.toString() !== shop.owner.toString())) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

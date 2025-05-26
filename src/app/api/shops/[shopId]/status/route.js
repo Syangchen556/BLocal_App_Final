@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Shop from '@/models/Shop';
 import User from '@/models/User';
 
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     
     // Check if user is authenticated and is an admin
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 401 }

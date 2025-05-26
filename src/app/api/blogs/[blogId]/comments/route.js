@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 
 // POST /api/blogs/[blogId]/comments - Add a comment
 export async function POST(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -56,7 +56,7 @@ export async function POST(request, { params }) {
 // DELETE /api/blogs/[blogId]/comments/[commentId] - Delete a comment
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -85,7 +85,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Check ownership
-    if (comment.author.toString() !== session.user.id && session.user.role !== 'ADMIN') {
+    if (comment.author.toString() !== session.user.id && session.user.role.toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
